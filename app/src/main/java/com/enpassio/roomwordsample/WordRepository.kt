@@ -2,7 +2,7 @@ package com.enpassio.roomwordsample
 
 import android.app.Application
 import android.arch.lifecycle.LiveData
-import android.os.AsyncTask
+import java.util.concurrent.Executor
 
 
 class WordRepository(application: Application,
@@ -10,15 +10,15 @@ class WordRepository(application: Application,
                      val mWordDao: WordDao = db.wordDao(),
                      val allWords: LiveData<List<Word>> = mWordDao.allWords) {
 
-    fun insert(word: Word) {
-        insertAsyncTask(mWordDao).execute(word)
+    private val mExecutor: Executor
+
+    init {
+        mExecutor = AppExecutors.instance.diskIO
     }
 
-    private class insertAsyncTask internal constructor(private val mAsyncTaskDao: WordDao) : AsyncTask<Word, Void, Void>() {
-
-        override fun doInBackground(vararg params: Word): Void? {
-            mAsyncTaskDao.insert(params[0])
-            return null
+    fun insert(word: Word) {
+        mExecutor.execute {
+            mWordDao.insert(word)
         }
     }
 }
